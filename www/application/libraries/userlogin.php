@@ -804,24 +804,10 @@ class UserLogin {
 
             #set a welcome message/advertisement after login
             if ($this->bIsAnonymous) {
-              appendMessage(sprintf(__("Dear guest, welcome to this publication database. As an anonymous user, you will probably not have edit rights. Also, the collapse status of the topic tree will not be persistent. If you like to have these and other options enabled, you might ask %s for a login account."),"<a href='mailto: \"".getConfigurationSetting("CFG_ADMIN")."\" ".'<'.getConfigurationSetting("CFG_ADMINMAIL").'>'."?subject=Access account for ".getConfigurationSetting("WINDOW_TITLE")." Aigaion database'>".getConfigurationSetting("CFG_ADMIN")."</a>"));
+              //appendMessage(sprintf(__("Dear guest, welcome to this publication database. As an anonymous user, you will probably not have edit rights. Also, the collapse status of the topic tree will not be persistent. If you like to have these and other options enabled, you might ask %s for a login account."),"<a href='mailto: \"".getConfigurationSetting("CFG_ADMIN")."\" ".'<'.getConfigurationSetting("CFG_ADMINMAIL").'>'."?subject=Access account for ".getConfigurationSetting("WINDOW_TITLE")." Aigaion database'>".getConfigurationSetting("CFG_ADMIN")."</a>"));
+                        appendMessage(sprintf(__("<p>Welcome to the Digital Bibliography of Cypriot Law. The main body of the present work contains over 1500 bibliographical references and 30 main categories, which were drafted so that the bibliography is as easy to use as possible. The categorisation aims not to achieve legal precision, but rather to enable the researchers and users to find the material they are looking for. The Digital Edition will be constantly updated with new bibliographical additions and will remain open to the public and free of charge. For more information the reader is referred to the <a href='http://cypriotlaw.com/index.php/help/viewhelp/front'>About</a> section.</p>")));  
             }
-            appendMessage("<table>\n<tr>
-                          <td>"
-                          .__("This site is powered by Aigaion - A PHP/Web based management system for shared and annotated bibliographies.")
-                          ." "
-                          .sprintf(__("For more information visit %s"),"<a href='http://www.aigaion.de/' class='open_extern'>www.aigaion.de</a>.")
-                          ."</td>
-                          <td>
-                          <a href='http://sourceforge.net/projects/aigaion' class='open_extern'>
-                                <img src='http://sflogo.sourceforge.net/sflogo.php?group_id=109910&type=12' 
-                                     width='120' 
-                                     height='30' 
-                                     border='0'
-                                     alt='Get Web based bibliography management system at SourceForge.net. Fast, secure and Free Open Source software downloads' />
-                          </a>
-                          </td></tr>\n</table>
-              ");
+            appendMessage("");
             
 
             #SO. Here, if login was successful, we will check the database structure once.
@@ -845,7 +831,7 @@ class UserLogin {
             if (!$this->bIsAnonymous && $this->hasRights('database_manage') && ($this->theUser->lastupdatecheck+48*60*60 < time())) {
                 $CI->load->helper('checkupdates');
 	            $checkresult = __("Checking for updates...");
-	            $updateinfo = checkUpdates();
+	            $updateinfo = ''; //checkUpdates();
 	            if ($updateinfo == '') {
     		        $checkresult .= '<b>'.__('OK').'</b><br/>';
         			$checkresult .= __('This installation of Aigaion is up-to-date');

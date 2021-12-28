@@ -18,10 +18,16 @@ class Help extends CI_Controller {
         //get output
         $headerdata = array();
         $headerdata['title'] = __('Help');
-        $headerdata['javascripts'] = array('tree.js','prototype.js','scriptaculous.js','builder.js');
+        $headerdata['javascripts'] = array('tree.js','prototype.js','scriptaculous.js','builder.js','tiny_mce.js', 'jquery.tinymce.js');
         
         $output = $this->load->view('header', $headerdata, true);
 
+ $userlogin  = getUserLogin();
+    		 $user       = $this->user_db->getByID($userlogin->userID());
+    		 if ($userlogin->hasRights('publication_edit'))
+    		 {
+    		 		$output .= '<a style="float:none;color:red" href="'. base_url() . 'help/edit/' . $this->uri->segment(3,'front') .'"> Edit this page... </a>';
+    		 }
         
         $output .= $this->load->view('help/header',
                                       array(),  
@@ -36,6 +42,8 @@ class Help extends CI_Controller {
 
 	}
 
-	
+	function edit(){
+
+	}	
 }
 ?>

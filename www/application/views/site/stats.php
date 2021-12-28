@@ -8,6 +8,7 @@ Parameters:
     none
 
 */
+/*
 	//get number of authors
     $authorCount = $this->author_db->getAuthorCount();
     
@@ -25,4 +26,5 @@ Parameters:
 <li>".sprintf(__('%s main topics'), $topicCount)."</li>
 </ul>
 ";
+*/
 ?>

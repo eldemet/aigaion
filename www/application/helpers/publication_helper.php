@@ -1,4 +1,4 @@
-<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 /*
 Aigaion - Web based document management system
 Copyright (C) 2003-2007 (in alphabetical order):
@@ -78,17 +78,18 @@ function getPublicationFieldArray($type)
 	switch ($type) {
 		case "Article":
 		return array( 
-		          'type'	          => 'hidden',
-                  'journal'         => 'required',
+		              'title'	          => 'required',
+                  'type'	          => 'hidden',
+                  'year'            => 'optional',
+                  'volume'          => 'optional',
+                  'number'          => 'optional',                  
+                  'journal'         => 'optional',
+                  'pages'		        => 'optional',            
                   'booktitle'       => 'hidden',
                   'edition'         => 'hidden',
                   'series'          => 'hidden',
-                  'volume'          => 'optional',
-                  'number'          => 'optional',
                   'chapter'         => 'hidden',
-                  'year'            => 'required',
-                  'month'           => 'optional',
-                  'pages'		        => 'optional',
+                  'month'           => 'hidden',
                   'publisher'       => 'hidden',
                   'location'        => 'hidden',
                   'institution'     => 'hidden',
@@ -96,46 +97,46 @@ function getPublicationFieldArray($type)
                   'school'          => 'hidden',
                   'address'         => 'hidden',
                   'howpublished'    => 'hidden',
-                  'note'            => 'optional',
-                  'issn'            => 'optional',
+                  'note'            => 'hidden',
+                  'issn'            => 'hidden',
                   'isbn'            => 'hidden',
-                  'crossref'        => 'optional',
-                  'namekey'         => 'optional',
+                  'crossref'        => 'hidden',
+                  'namekey'         => 'hidden',
                   'url'             => 'optional',
                   'doi'             => 'optional',
-                  'abstract'        => 'optional',
-                  'userfields'      => 'optional'
+                  'abstract'        => 'hidden',
+                  'userfields'      => 'hidden'
 								);
 		break;
 		case "Book":
 		return array( 
 		              'type'	          => 'hidden',
                   'journal'         => 'hidden',
-                  'booktitle'       => 'optional',
+                  'booktitle'       => 'required',
                   'edition'         => 'optional',
-                  'series'          => 'optional',
+                  'series'          => 'hidden',
                   'volume'          => 'optional',
-                  'number'          => 'optional',
+                  'number'          => 'hidden',
                   'chapter'         => 'hidden',
-                  'year'            => 'required',
-                  'month'           => 'optional',
-                  'pages'		        => 'hidden',
-                  'publisher'       => 'required',
-                  'location'        => 'hidden',
+                  'year'            => 'optional',
+                  'month'           => 'hidden',
+                  'pages'		        => 'optional',
+                  'publisher'       => 'optional',
+                  'location'        => 'optional',
                   'institution'     => 'hidden',
                   'organization'    => 'hidden',
                   'school'          => 'hidden',
-                  'address'         => 'optional',
+                  'address'         => 'hidden',
                   'howpublished'    => 'hidden',
-                  'note'            => 'optional',
+                  'note'            => 'hidden',
                   'issn'            => 'hidden',
-                  'isbn'            => 'optional',
-                  'crossref'        => 'optional',
-                  'namekey'         => 'optional',
+                  'isbn'            => 'hidden',
+                  'crossref'        => 'hidden',
+                  'namekey'         => 'hidden',
                   'url'             => 'optional',
                   'doi'             => 'optional',
-                  'abstract'        => 'optional',
-                  'userfields'      => 'optional'
+                  'abstract'        => 'hidden',
+                  'userfields'      => 'hidden'
 								);
 		break;
 		case "Booklet":
@@ -170,33 +171,34 @@ function getPublicationFieldArray($type)
 								);
 		break;
 		case "Inbook":
-		return array( 'type'	          => 'optional',
+		return array( 'title'	          => 'optional',
+                  'type'	          => 'hidden',
                   'journal'         => 'hidden',
-                  'booktitle'       => 'hidden',
+                  'booktitle'       => 'optional',
                   'edition'         => 'optional',
-                  'series'          => 'optional',
+                  'series'          => 'hidden',
                   'volume'          => 'optional',
-                  'number'          => 'optional',
-                  'chapter'         => 'conditional',
-                  'year'            => 'required',
-                  'month'           => 'optional',
-                  'pages'		        => 'conditional',
-                  'publisher'       => 'required',
-                  'location'        => 'hidden',
+                  'number'          => 'hidden',
+                  'chapter'         => 'hidden',
+                  'year'            => 'optional',
+                  'month'           => 'hidden',
+                  'pages'		        => 'optional',
+                  'publisher'       => 'optional',
+                  'location'        => 'optional',
                   'institution'     => 'hidden',
                   'organization'    => 'hidden',
                   'school'          => 'hidden',
-                  'address'         => 'optional',
+                  'address'         => 'hidden',
                   'howpublished'    => 'hidden',
-                  'note'            => 'optional',
+                  'note'            => 'hidden',
                   'issn'            => 'hidden',
-                  'isbn'            => 'optional',
-                  'crossref'        => 'optional',
-                  'namekey'         => 'optional',
+                  'isbn'            => 'hidden',
+                  'crossref'        => 'hidden',
+                  'namekey'         => 'hidden',
                   'url'             => 'optional',
                   'doi'             => 'optional',
-                  'abstract'        => 'optional',
-                  'userfields'      => 'optional'
+                  'abstract'        => 'hidden',
+                  'userfields'      => 'hidden'
 								);
 		break;
 		case "Incollection":
@@ -488,17 +490,20 @@ function getPublicationSummaryFieldArray($type)
 		case "Article":
 			return array( 
 	                  'actualyear'    => array(' (',')'),
-			              'journal'       => ', '.__('in:').' ',
-	                  'volume'        => ', ', 
-	                  'number'        => ':',
-	                  'pages'         => array('(',')')
+			              //'journal'       => ', '.__('in:').' ',
+	                  'volume'        => ' ', 
+	                  'number'        => array(' (',')'),
+	                   'journal'       => ' ',
+	                  //'number'        => ':',
+	                  'pages'         => ' '
 	                );
 		break;
 		case "Book":
 			return array( 'publisher'     => ', ',
 	                  'series'        => ', ',
-	                  'volume'        => ', '.__('volume').' ', 
-	                  'actualyear'    => ', '
+	                  'volume'        => ', '.__('vol').' ', 
+	                  'actualyear'    => ', ',
+	                  'pages' => ' '
                   );
 		break;
 		case "Booklet":
@@ -580,30 +585,434 @@ function getPublicationTypes()
 {
   return array("Article"        => __('Article'),
           		 "Book"           => __('Book'),
-          		 "Booklet"        => __('Booklet'),
-          		 "Inbook"         => __('Inbook'),
-          		 "Incollection"   => __('Incollection'),
-          		 "Inproceedings"  => __('Inproceedings'),
-          		 "Manual"         => __('Manual'),
-          		 "Mastersthesis"  => __('Mastersthesis'),
-          		 "Misc"           => __('Misc'),
-          		 "Phdthesis"      => __('Phdthesis'),
-          		 "Proceedings"    => __('Proceedings'),
-          		 "Techreport"     => __('Techreport'),
-          		 "Unpublished"    => __('Unpublished'));
+          		 "Inbook"         => __('Chapter'));
+          		 //"Booklet"        => __('Booklet'),
+          		 //"Inbook"         => __('Inbook'),
+          		 //"Incollection"   => __('Incollection'),
+          		 //"Inproceedings"  => __('Inproceedings'),
+          		 //"Manual"         => __('Manual'),
+          		 //"Mastersthesis"  => __('Mastersthesis'),
+          		 //"Phdthesis"      => __('Phdthesis'),
+          		 //"Proceedings"    => __('Proceedings'),
+          		 //"Techreport"     => __('Techreport'),
+          		 //"Unpublished"    => __('Unpublished'),
+               //  "Misc"           => __('Misc'));
+                 
 }
 
 
 function getPublicationStatusTypes()
 {
   return array(""               => "",
-               "preparation"    => __('In preparation'),
-               "submitted"      => __('Submitted'),
-               "review"         => __('Under review'),
-               "revision"       => __('Under revision'),
-               "accepted"       => __('Accepted'),
-               "rejected"       => __('Rejected'),
+               //"preparation"    => __('In preparation'),
+               //"submitted"      => __('Submitted'),
+               //"review"         => __('Under review'),
+               //"revision"       => __('Under revision'),
+               //"accepted"       => __('Accepted'),
+               //"rejected"       => __('Rejected'),
                "published"      => __('Published'));
 }
 
-?>
+function output_publication($publication, $order, $even = 'even', $type = ''){
+/* 	echo "similar_pub_id: " . $publication->similar_pub_id . " pub_id: " . $publication->pub_id; */
+	$userlogin  = getUserLogin();
+    $summarystyle = $userlogin->getPreference('summarystyle');  
+    $summaryfields = getPublicationSummaryFieldArray($publication->pub_type);
+
+
+    
+ if($type === 'secondary') 
+ {
+ 		echo "<tr>
+    				<td class ='secondary'> Also in: ";
+ }
+ else
+ {
+ 		echo "
+<div class='publication_summary ".$even."' id='publicationsummary".$publication->pub_id."'>
+<table width='100%'>
+  <tr id='sim_id_".$publication->pub_id."'>
+    <td>";
+ }   				
+    				
+$displayTitle = $publication->title;
+//remove braces in list display
+if ( (strpos($displayTitle,'$')===false) 
+    &&
+     (strpos($displayTitle,"\\")===false)     //insert here condition that says 'no replacing if latex code' (i.e. any remaining backslash)
+     ) {
+  $displayTitle = str_replace(array('{','}'),'',$displayTitle);
+}
+
+$num_authors    = count($publication->authors);
+$num_editors    = count($publication->editors);
+
+if ($summarystyle == 'title') {
+    echo "<span class='title'>".anchor('publications/show/'.$publication->pub_id, $displayTitle, array('title' => __('View publication details')))."</span>";
+}
+    
+$current_author = 1;
+
+foreach ($publication->authors as $author)
+{
+  if (($current_author == $num_authors) & ($num_authors > 1)) {
+    echo " ".translate('and', $publication->language)." ";
+  }
+  else if ($current_author>1 || ($summarystyle == 'title')) {
+    echo ", ";
+  }
+
+  echo  "<span class='author'>".anchor('authors/show/'.$author->author_id, $author->getName(), array('title' => sprintf(__('All information on %s'),$author->cleanname)))."</span>";
+  $current_author++;
+}
+
+if ($summarystyle == 'author') {
+    if ($num_authors > 0) {
+        echo ', ';
+    }
+    
+////////////////////////////////////////////////////////////////////////////////////////////
+    
+if ($publication->pub_type=='Article'){
+        $displayJournal = $publication->journal;
+        $displayVolume = $publication->volume;
+        $displayNumber = $publication->number;
+        $displayYear = $publication->year;
+        $displayPages = $publication->pages;
+        $displayURL = $publication->url;
+        $displayDOI = $publication->doi;
+        
+        //$displayNotes = $publication->note;
+    
+        echo "<span class='title'>&#8216;".anchor('publications/show/'.$publication->pub_id, $displayTitle, array('title' => __('View publication details')))."&#8217;</span> ";
+        if ($displayVolume!=''){
+          echo "(".$displayYear.") ".$displayVolume;
+        }else{
+          echo "[".$displayYear."]";
+        }
+        if ($displayVolume!='' && $displayNumber!=''){
+          echo "(".$displayNumber.")";
+        }elseif($displayVolume=='' && $displayNumber!=''){
+        echo " ".$displayNumber;
+        } 
+        if ($displayJournal!=''){
+          echo " ".$displayJournal;
+        }        
+        if ($displayPages!=''){
+          echo " ".$displayPages; //." ".str_replace('-', '–', $displayPages);
+        }        
+
+        
+}elseif ($publication->pub_type=='Book'){   //demetris 21/8
+        //$displayLang = $publication->language;
+        $displayEdition = $publication->edition;
+        $displayVolume = $publication->volume;
+        $displayYear = $publication->year;
+        $displayPages = $publication->pages;
+        $displayPublisher = $publication->publisher;
+        $displayLocation = $publication->location;
+        $displayNotes = $publication->note;
+        $displayBookTitle = $publication->booktitle; 
+        $displayURL = $publication->url;
+        $displayDOI = $publication->doi;
+        
+   echo "<span class='title'><i>".anchor('publications/show/'.$publication->pub_id, $displayBookTitle, array('title' => __('View publication details')))."</i></span>";
+        /*if ($displayVolume!='' && $displayLang!=""){
+          echo ", vol ".$displayVolume;
+          }elseif($displayVolume!='' && $displayLang==""){
+          echo ", τ.".$displayVolume;
+        }*/
+        if ($displayVolume!='' ){ echo ', '.translate('vol', $publication->language).' '.$displayVolume; } 
+        
+        if ($num_editors>0 || $displayNotes!='' || $displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) {
+        echo " (";  
+        }                                                 
+        
+        $current_editor = 1;
+        foreach ($publication->editors as $editor)
+        {
+          //if ($current_editor==1) echo "";
+          //if (($current_editor == $num_editors) & ($num_editors > 1)) {
+          //  echo " ".translate('and', $publication->language)." ";
+          //}
+          //else if ($current_editor>1 || ($summarystyle == 'title')) {
+          //  echo ", ";
+          //}
+          echo  "<span class='author'>".anchor('authors/show/'.$editor->author_id, $editor->getName(), array('title' => sprintf(__('All information on %s'),$editor->cleanname)))."</span>";
+          if ($current_editor==$num_editors){
+          }elseif($current_editor==$num_editors-1){
+            echo " ".translate('and', $publication->language)." ";
+          }else{
+            echo ', ';
+          }
+          
+          //if ($current_editor == $num_editors){
+          //}elseif ($current_editor == $num_editors-1){
+          //  echo " ".translate('and', $publication->language)." ";
+          //}else{
+          //  echo " ,";
+          //}
+          $current_editor++;
+        }
+        
+if ($num_editors==1){
+    echo " (".translate('ed', $publication->language).")";
+}elseif($num_editors>1){
+    echo " (".translate('eds', $publication->language).")";
+}
+        
+        if ($num_editors>0 && ($displayNotes!='' || $displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='')) echo ", ";
+        echo $displayNotes;
+        if ($displayNotes!=''){
+          echo $displayNotes;
+        }
+         if ($displayNotes!='' && ($displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) ){
+          echo ', ';
+        }
+        
+        if ($displayEdition!=''){
+          echo $displayEdition." ".translate('edn', $publication->language);
+        } 
+         if ($displayEdition!='' && ($displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) ){
+          echo ', ';
+        }        
+        if ($displayPublisher!=''){
+          echo $displayPublisher;
+        }
+         if ($displayPublisher!='' && ($displayLocation!='' || $displayYear!='')){
+          echo ', ';
+        }        
+        if ($displayLocation!=''){
+          echo $displayLocation;
+        } 
+         if ($displayLocation!='' && $displayYear!=''){
+          echo ', ';
+        }                
+        if ($displayYear!=''){
+          echo $displayYear;
+        }        
+        if (sizeof($publication->editors)>0 || $displayNotes!='' || $displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) {
+        echo ")";  
+        } 
+        //echo ")";
+        if ($displayPages!=''){
+          echo " ".$displayPages;
+        }    
+}elseif ($publication->pub_type=='Inbook'){   //demetris 21/8
+        $displayEdition = $publication->edition;
+        $displayVolume = $publication->volume;
+        $displayYear = $publication->year;
+        $displayPages = $publication->pages;
+        $displayPublisher = $publication->publisher;
+        $displayLocation = $publication->location;
+        $displayNotes = $publication->note;
+        $displayBookTitle = $publication->booktitle; 
+        $displayURL = $publication->url;
+        $displayDOI = $publication->doi;
+        
+   echo "<span class='title'>&#8216;".anchor('publications/show/'.$publication->pub_id, $displayTitle, array('title' => __('View publication details')))."&#8217;</span>";
+   
+$current_editor = 1;
+foreach ($publication->editors as $editor)
+{
+  if ($current_editor==1) echo " ";
+  if (($current_editor == $num_editors) && ($num_editors > 1)) {
+    echo " ".translate('and', $publication->language)." ";
+  }
+  else if ($current_editor>1 || ($summarystyle == 'title')) {
+    echo ", ";
+  }
+  echo  "<span class='author'>".anchor('authors/show/'.$editor->author_id, $editor->getName(), array('title' => sprintf(__('All information on %s'),$editor->cleanname)))."</span>";
+   $current_editor++;  
+}
+
+if ($num_editors==1){
+    echo " (".translate('ed', $publication->language).")";
+}elseif($num_editors>1){
+    echo " (".translate('eds', $publication->language).")";
+}
+ 
+   
+   echo ", <i>".$displayBookTitle."</i>";
+        if ($displayVolume!=''){
+          echo ", ".translate('vol', $publication->language)." ".$displayVolume;
+        }
+        
+        if ($displayNotes!='' || $displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) {
+        echo " (";  
+        } 
+         
+        //echo " (";
+        echo $displayNotes;
+        if ($displayNotes!=''){
+          echo $displayNotes;
+        }
+         if ($displayNotes!='' && ($displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) ){
+          echo ', ';
+        }
+        
+        if ($displayEdition!=''){
+          echo $displayEdition." ".translate('edn', $publication->language);
+        } 
+         if ($displayEdition!='' && ($displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) ){
+          echo ', ';
+        }        
+        if ($displayPublisher!=''){
+          echo $displayPublisher;
+        }
+         if ($displayPublisher!='' && ($displayLocation!='' || $displayYear!='')){
+          echo ', ';
+        }        
+        if ($displayLocation!=''){
+          echo $displayLocation;
+        } 
+         if ($displayLocation!='' && $displayYear!=''){
+          echo ', ';
+        }                
+        if ($displayYear!=''){
+          echo $displayYear;
+        }     
+        
+                if ($displayNotes!='' || $displayEdition!='' || $displayPublisher!='' || $displayLocation!='' || $displayYear!='' ) {
+        echo ")";  
+        } 
+           
+        //echo ")";
+        if ($displayPages!=''){
+          echo " ".$displayPages;
+        }  
+   
+}
+
+
+}
+
+/*
+foreach ($summaryfields as $key => $prefix) {
+  $val = utf8_trim($publication->getFieldValue($key));
+
+  if ($key=="month")$val=formatMonthText($val);
+  $postfix='';
+  if (is_array($prefix)) {
+    $postfix = $prefix[1];
+    $prefix = $prefix[0];
+  }
+  if ($val) {
+    echo $prefix.$val.$postfix;
+  }
+}
+*/
+
+if (!(isset($noNotes) && ($noNotes == true)))
+{
+  $notes = $publication->getNotes();
+  if ($notes != null) {
+  echo "<br/>
+        <ul class='notelist'>";
+    foreach ($notes as $note) {
+      echo "
+          <li>".$this->load->view('notes/summary', array('note' => $note), true)."</li>";
+    }
+    echo "
+        </ul>";
+  }
+}
+echo "
+    </td>
+    <td class='alignright aligntop fivepercentwidth'>
+      <span id='bookmark_pub_".$publication->pub_id."'>";
+      
+/*
+if ($useBookmarkList) {
+  if ($publication->isBookmarked) {
+    echo '<span title="'.__('Click to UnBookmark publication').'">'
+         .$this->ajax->link_to_remote("<img class='large_icon' src='".getIconUrl('bookmarked.gif')." ' alt='bookmarked' />",
+          array('url'     => site_url('/bookmarklist/removepublication/'.$publication->pub_id),
+                'update'  => 'bookmark_pub_'.$publication->pub_id
+                )
+          ).'</span>';
+  } 
+  else {
+    echo '<span title="'.__('Click to Bookmark publication').'">'
+         .$this->ajax->link_to_remote("<img class='large_icon' src='".getIconUrl('nonbookmarked.gif')."' alt='nonbookmarked' />",
+          array('url'     => site_url('/bookmarklist/addpublication/'.$publication->pub_id),
+                'update'  => 'bookmark_pub_'.$publication->pub_id
+                )
+          ).'</span>';
+  }
+}
+*/
+
+echo "</span>";
+$attachments = $publication->getAttachments();
+if (count($attachments) != 0)
+{
+    if ($attachments[0]->isremote) {
+        echo "<br/><a href='".prep_url($attachments[0]->location)."' class='open_extern'><img class='large_icon' title='".sprintf(__('Download %s'),htmlentities($attachments[0]->name,ENT_QUOTES, 'utf-8'))."' src='".getIconUrl("attachment_html.gif")."' alt='download' /></a>\n";
+    } else {
+        $iconUrl = getIconUrl("attachment.gif");
+        //might give problems if location is something containing UFT8 higher characters! (stringfunctions)
+        //however, internal file names were created using transliteration, so this is not a problem
+        $extension=strtolower(substr(strrchr($attachments[0]->location,"."),1));
+        if (iconExists("attachment_".$extension.".gif")) {
+            $iconUrl = getIconUrl("attachment_".$extension.".gif");
+        }
+        $params = array('title'=>sprintf(__('Download %s'),$attachments[0]->name));
+        if ($userlogin->getPreference('newwindowforatt')=='TRUE')
+            $params['class'] = 'open_extern';
+        echo '<br/>'.anchor('attachments/single/'.$attachments[0]->att_id,"<img class='large_icon' src='".$iconUrl."' alt='attachment' />" ,$params)."\n";
+    }
+}  
+if (utf8_trim($publication->doi)!='') {
+    echo "[<a title='".__('Click to follow Digital Object Identifier link to online publication')."' class='open_extern' href='http://dx.doi.org/".$publication->doi."'>DOI</a>]";
+}
+if (utf8_trim($publication->url)!='') {
+    echo "[<a title='".prep_url($publication->url)."' class='open_extern' href='".prep_url($publication->url)."'>URL</a>]";
+}
+
+
+
+}
+
+
+
+/*
+|
+| Language specific for publications list
+|  
+|  If you want to output the word "and", then write:    
+|				
+|				<?php echo translate('and', $publication->language);?>
+|
+|	 Make sure it is set in all languages (both english and greek).  
+|
+*/
+function translate($word, $language){
+
+
+
+	/*********** GREEK  ****************/
+	$greek['and'] = 'και';
+	$greek['by']	= 'από';
+	$greek['vol'] 			= 'τομ';
+	$greek['ed'] 			= 'επ';
+	$greek['eds'] 			= 'επ';
+	$greek['edn'] 			= 'εκδ';
+	
+	/************************************/
+
+	/*********** ENGLISH  ****************/
+	$english['and'] 		= 'and';
+	$english['by'] 			= 'by';
+	$english['vol'] 			= 'vol';
+		$english['ed'] 			= 'ed';
+	$english['eds'] 			= 'eds';
+	  $english['edn'] 			= 'edn';
+	/************************************/
+
+
+
+	//return language specific value
+	return $language === 'english' ? $english[$word] : $greek[$word];
+	
+}

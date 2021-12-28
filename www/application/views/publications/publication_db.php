@@ -10,7 +10,7 @@ class Publication_db {
   /** set this to true if you want to enforce merges. (Merge: copy crossref info into publication object) */
   var $enforceMerge = False;
 
-  function __construct()
+  function Publication_db()
   {
   }
 
@@ -244,8 +244,7 @@ class Publication_db {
         {
           if ((substr($keyword, -1, 1) == ',') || (substr($keyword, -1, 1) == ';'))
             $keyword = substr($keyword, 0, strlen($keyword) - 1);
-
-          $kw = new stdClass();
+          
           $kw->keyword = $keyword;
           $keyword_array[] = $kw;
           unset($kw);
@@ -486,9 +485,26 @@ class Publication_db {
       }
     }
     
-        //set similar_pub_id, if present
-    $this->set_pub_id($publication);
-
+    //if similar_pub_id is present
+    if(isset($publication->similar_pub_id))
+    {
+    	$similar_publication = $this->getByID($publication->similar_pub_id);
+    	
+    	if(isset($similar_publication->similar_pub_id))
+    	{
+    		$publication->similar_pub_id = $similar_publication->similar_pub_id;
+    	}
+    	else
+    	{
+    		$publication->similar_pub_id = $similar_publication->pub_id;
+    		//also update the older one
+    		$CI->db->where('pub_id', $similar_publication->pub_id);
+    		$CI->db->update('publication', array('similar_pub_id' => $similar_publication->pub_id));
+    		echo $CI->db->last_query();
+    	}
+    }
+    
+   
     //create cleantitle and cleanjournal
     $publication->cleantitle    = cleanTitle($publication->title);
     $publication->cleanjournal    = cleanTitle($publication->journal);
@@ -524,11 +540,15 @@ class Publication_db {
     //update this publication's pub_id
     $publication->pub_id = $CI->db->insert_id();
     
+    
      //if topic has been selected
-    if(isset($_POST['topic']))
+    if(isset($publication->topic))
     {
-    	$CI->topic_db->subscribePublication($publication->pub_id, $_POST['topic']);
+    	$topicpub_data = array('topic_id' => $publication->topic, 'pub_id' => $publication->pub_id);
+    	$CI->db->insert('topicpublicationlink', $topicpub_data);
     }
+
+    
     
     //add custom fields
     $CI->customfields_db->addForID($publication->pub_id, $publication->getCustomFields());
@@ -618,9 +638,12 @@ class Publication_db {
     //data might have been rigged!)
     $userlogin  = getUserLogin();
     $oldpublication = $this->getByID($publication->pub_id);
-    if (($oldpublication == null) ||
-       (!$userlogin->hasRights('publication_edit')) || 
-			 (!$CI->accesslevels_lib->canEditObject($oldpublication))) 
+    if (    ($oldpublication == null) 
+         ||
+            (!$userlogin->hasRights('publication_edit'))
+         || 
+            (!$CI->accesslevels_lib->canEditObject($oldpublication))
+        ) 
     {
         appendErrorMessage('Edit publication: insufficient rights. publication_db.update<br/>');
         return $oldpublication;
@@ -687,6 +710,7 @@ class Publication_db {
     {
       $publication->report_type = $publication->type;
     }
+
   
     //check for specialchars
     if (getConfigurationSetting('CONVERT_BIBTEX_TO_UTF8')!='FALSE') {
@@ -699,14 +723,12 @@ class Publication_db {
       {
         $publication->customfields[$field]['value'] = $CI->bibtex2utf8->bibCharsToUtf8FromString($value['value']);
       }
+
     }
-    
-        //set similar_pub_id, if present
-    $this->set_pub_id($publication);
     
     //create cleantitle and cleanjournal
     $publication->cleantitle    = cleanTitle($publication->title);
-    $publication->cleanjournal  = cleanTitle($publication->journal);
+    $publication->cleanjournal    = cleanTitle($publication->journal);
     
     //get actual year
     if (trim($publication->year) == '')
@@ -735,12 +757,6 @@ class Publication_db {
     $CI->db->where('pub_id', $publication->pub_id);
     $CI->db->update('publication', $data);
 
-    //if topic has been selected
-    if(isset($_POST['topic']))
-    {
-    	$CI->topic_db->subscribePublication($publication->pub_id, $_POST['topic']);
-    }
-    
     //update custom fields
     $CI->customfields_db->updateForID($publication->pub_id, $publication->getCustomFields());
     
@@ -808,6 +824,7 @@ class Publication_db {
     $CI->db->where('pub_id', $publication->pub_id);
     $CI->db->update('publication', array('cleanauthor'=>trim($publication->cleanauthor)));
 
+
     //changed bibtex_id?
     if ($oldpublication->bibtex_id != $publication->bibtex_id) {
         //fix all crossreffing notes
@@ -822,7 +839,8 @@ class Publication_db {
     {
       $publication->type = $publication->report_type;
       unset($publication->report_type);
-    }    
+    }
+    
     
     return $publication;
   }
@@ -911,91 +929,9 @@ class Publication_db {
         $CI->db->delete('notecrossrefid',array('xref_id'=>$publication->pub_id));
         //add the information of the deleted rows to trashcan(time, data), in such a way that at least manual reconstruction will be possible
         
-           //check if this is referenced by similar_pub_id and update accordingly
-        $this->update_sim_pub_id_on_delete($publication);
-        
         //refresh the bibtex ID links
         refreshBibtexIdLinks();
         return true;
-    }
-    
-    
-    function update_sim_pub_id_on_delete($publication){
-
-    	$CI = &get_instance();
-
-    	$customFields = $publication->getCustomFields();
-    	foreach ($customFields as $field_id => $field_name) {
-			  if ($customFields[$field_id]['fieldname'] === 'similar_pub_id') 
-				{
-					if($customFields[$field_id]['value'] !== NULL)
-					{
-						$this_similar_pub_id = $customFields[$field_id]['value'];
-						$this_field_id = $field_id;
-						break;
-					}
-				}
-			}
-
-    	if(isset($this_similar_pub_id))
-    	{
-				// get all publications   
-	    	$all_publications = array();
-	    	$Q = $CI->db->get('publication');
-	    	if($Q->num_rows() > 0)
-	    	{
-	    		foreach($Q->result_array() as $row)
-	    		{
-	    			$all_publications[] = $row;
-	    		}
-		    }
-
-		    $found = array();	
-		    $count = 0;
-
-		    foreach($all_publications as $pub)
-		    {
-		    	$customFields = $publication->getCustomFields();
-
-			    foreach ($customFields as $field_id => $field_name) {
-					  if ($customFields[$field_id]['fieldname'] === 'similar_pub_id') 
-						{
-							if($customFields[$field_id]['value'] == $this_similar_pub_id)
-							{
-								$found[] = $pub;
-								$count++;
-								break;
-							}
-						}
-					}
-				}
-
-	    	if($count == 1)
-	    	{
-	    		$CI->customfields_db->updateForID($publication->pub_id, array($this_field_id => array('value' => '')));
-	    		foreach($found as $pub)
-	    		{
-	    			$CI->customfields_db->updateForID($pub->pub_id, array($this_field_id => array('value' => '')));
-	    		}
-	    	}
-	    	elseif($count > 1)
-	    	{
-	    		$i = 0;
-	    		foreach($found as $pub)
-	    		{
-	    			if($i==0)
-	    			{
-	    				$new_primary_id = $pub->pub_id;
-	    				$CI->customfields_db->updateForID($pub->pub_id, array($this_field_id => array('value' => $new_primary_id)));
-	    			}
-	    			else
-	    			{
-	    				$CI->customfields_db->updateForID($pub->pub_id, array($this_field_id => array('value' => $new_primary_id)));
-	    			}
-	    			$i++;
-	    		}
-	    	}
-    	}    
     }
     
     function commitcoverimage($publication)
@@ -1100,9 +1036,6 @@ class Publication_db {
   {
     //DR: when crossref set, nothing is required :) (see end of function)
     $CI = &get_instance();
-    
-    $CI->load->helper('publication');
-    
     $validate_required    = array();
     $validate_conditional = array();
     $fields               = getPublicationFieldArray($publication->pub_type);
@@ -1156,210 +1089,6 @@ class Publication_db {
   }
 
 
-  function getCountForTopic($topic_id)
-  {
-  	$CI = &get_instance();
-  	$Q = $CI->db->query("SELECT DISTINCT count(*) c FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-  	    WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-  	    AND ".AIGAION_DB_PREFIX."publication.pub_id = ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id;");
-  	
-  	foreach ($Q->result() as $row)
-  	{
-  		return $row->c;
-  	}
-
-  	return 0;  	  	
-  }
-  
-  function getVisibleCountForTopic($topic_id)
-  {
-  	$CI = &get_instance();
-    $userlogin=getUserLogin();
-    
-    if ($userlogin->hasRights('read_all_override'))
-      return $this->getCountForTopic($topic_id);
-    
-    if ($userlogin->isAnonymous()) //get only public publications
-    {
-  	$Q = $CI->db->query("SELECT DISTINCT count(*) c FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-  	    WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-  	    AND   ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-        AND   ".AIGAION_DB_PREFIX."publication.derived_read_access_level = 'public'");
-    }
-    else //get all non-private publications and publications that belong to the user
-    {
-        $Q = $CI->db->query("SELECT DISTINCT count(*) c FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-  	    WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-  	    AND   ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-        AND  (".AIGAION_DB_PREFIX."publication.derived_read_access_level != 'private' 
-           OR ".AIGAION_DB_PREFIX."publication.user_id = ".$userlogin->userId().")");
-    }
-  	
-  	foreach ($Q->result() as $row)
-  	{
-  		return $row->c;
-  	}
-
-  	return 0;  	  	
-  }
-  
-  /**
-   * Get information about the number of publications
-   * for each criterion: year/type/author(first letter)/rating
-   * Returning all distinct values in the group. Example: 2010:4,2011:9,null:1
-   * @param int $topic_id
-   * @return array(array(group,value,count))
-   */
-  function getPubStructForTopic($topic_id)
-  {
-  	$CI = &get_instance();
-  	
-  	$sql = array();
-    # @TODO: (KK) needs only to search for what is wanted to be sorted by; this has been done in getVisiblePubStructForTopic
-  	$sql[] = "(SELECT 'year' grp, p.year value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id ".
-  	  					" GROUP BY p.year)";
-  	
-  	$sql[] = "(SELECT 'type', p.pub_type type, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id ".
-  	  					" GROUP BY p.pub_type)";
-  	
-  	$sql[] = "(SELECT 'author', UPPER(LEFT(cleanauthor,1)) author, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id ".
-  	  					" GROUP BY UPPER(LEFT(cleanauthor,1)))";
-  	
-  	$sql[] = "(SELECT 'title', UPPER(LEFT(cleantitle,1)) title, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	  	    AND p.pub_id = t.pub_id ".
-  	  	  					" GROUP BY UPPER(LEFT(cleantitle,1)))";
-  	
-  	$sql[] = "(SELECT 'rating', mark, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id ".
-  	  					" GROUP BY mark) ORDER BY grp, value";
-  	
-  	$Q = $CI->db->query(join($sql, ' UNION '));
-  	
-  	$result = array();
-    foreach ($Q->result() as $row)
-    {
-        $result[] = array('group' => $row->grp, 'value' => $row->value, 'count' => $row->c);
-    }
-      
-    return $result;
-  	
-  }
- 
-  function getVisiblePubStructForTopic($topic_id, $order='year')
-  {
-  	$CI = &get_instance();
-    $userlogin = getUserLogin();
-    if ($userlogin->hasRights('read_all_override'))
-      return $this->getPubStructForTopic($topic_id, $order);
-  	
-  	$sql = array();
-    if ($userlogin->isAnonymous()) //get only public publications
-    {
-        switch($order) {
-            case 'year':
-            case 'recent':
-  	$sql = "(SELECT 'year' grp, p.year value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND p.derived_read_access_level = 'public'".
-  	  					" GROUP BY p.year)";
-            break;
-            case 'type':
-  	$sql = "(SELECT 'type' grp, p.pub_type value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND p.derived_read_access_level = 'public'".
-  	  					" GROUP BY p.pub_type)";
-            break;
-            case 'author':
-  	$sql = "(SELECT 'author' grp, UPPER(LEFT(cleanauthor,1)) value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND p.derived_read_access_level = 'public'".
-  	  					" GROUP BY UPPER(LEFT(cleanauthor,1)))";
-            break;
-            case 'title':
-  	$sql = "(SELECT 'title' grp, UPPER(LEFT(cleantitle,1)) value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	  	WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-                AND p.pub_id = t.pub_id 
-                AND p.derived_read_access_level = 'public'".
-  	  	  					" GROUP BY UPPER(LEFT(cleantitle,1)))";
-            break;
-            case 'rating':
-  	$sql = "(SELECT 'rating' grp, mark value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND p.derived_read_access_level = 'public'".
-  	  					" GROUP BY mark)";
-            break;
-        }
-    }
-    else //get all non-private publications and publications that belong to the user
-    {
-        switch($order) {
-            case 'year':
-    $sql = "(SELECT 'year' grp, p.year value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND (p.derived_read_access_level != 'private' 
-                     OR p.user_id = ".$userlogin->userId().")".
-  	  					" GROUP BY p.year)";
-            break;
-            case 'type':
-  	$sql = "(SELECT 'type' grp, p.pub_type value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND (p.derived_read_access_level != 'private' 
-                     OR p.user_id = ".$userlogin->userId().")".
-  	  					" GROUP BY p.pub_type)";
-            break;
-            case 'author':
-  	$sql = "(SELECT 'author' grp, UPPER(LEFT(cleanauthor,1)) value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND (p.derived_read_access_level != 'private' 
-                     OR p.user_id = ".$userlogin->userId().")".
-  	  					" GROUP BY UPPER(LEFT(cleanauthor,1)))";
-            break;
-            case 'title':
-  	$sql = "(SELECT 'title' grp, UPPER(LEFT(cleantitle,1)) value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	  	    AND p.pub_id = t.pub_id 
-                AND (p.derived_read_access_level != 'private' 
-                     OR p.user_id = ".$userlogin->userId().")".
-  	  	  					" GROUP BY UPPER(LEFT(cleantitle,1)))";
-            break;
-            case 'rating':
-  	$sql = "(SELECT 'rating' grp, mark value, count(*) c FROM ".AIGAION_DB_PREFIX."publication p, ".AIGAION_DB_PREFIX."topicpublicationlink t
-  	  	  	    WHERE t.topic_id = ".$CI->db->escape($topic_id)."
-  	  	  	    AND p.pub_id = t.pub_id 
-                AND (p.derived_read_access_level != 'private' 
-                     OR p.user_id = ".$userlogin->userId().")".
-  	  					" GROUP BY mark)";
-            break;
-        }
-    }
-  	
-    $Q = $CI->db->query($sql);
-  	
-  	$result = array();
-    foreach ($Q->result() as $row)
-    {
-        $result[] = array('group' => $row->grp, 'value' => $row->value, 'count' => $row->c);
-    }
-      
-    return $result;
-  	
-  }
-    
 ///////publication list functions
 
   function getForTopic($topic_id,$order='',$page=0)
@@ -1381,15 +1110,13 @@ class Publication_db {
       case 'author':
         $orderby='cleanauthor, actualyear DESC';
         break;
-      case 'rating':
-      	$orderby='mark DESC, actualyear DESC';
-        break;
     }
     $CI = &get_instance();
     
     //do we need multipage output / use limit statement
+    $limit = "";
     $userlogin = getUserLogin();
-    $liststyle = $userlogin->getPreference('liststyle');
+    $liststyle = 50;
     $limit = "";
     if ($page!=-1)
     {
@@ -1401,92 +1128,10 @@ class Publication_db {
     }
     //we need merge functionality here, so initialze a merge cache
     $this->crossref_cache = array();
-    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication
-    INNER JOIN (SELECT ".AIGAION_DB_PREFIX."publication.pub_id FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-      WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-      AND   ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-      ORDER BY ".$orderby." ".$limit.")
-    AS lim USING (pub_id)");
-
-    $result = array();
-    foreach ($Q->result() as $row)
-    {
-      $next = $this->getFromRow($row);
-      if ($next != null)
-      {
-        $result[] = $next;
-      }
-    }
-
-    unset($this->crossref_cache);
-    return $result;
-  }
-  
-  function getVisibleForTopic($topic_id,$order='',$page=0)
-  {
-    $CI = &get_instance();
-    $userlogin=getUserLogin();
-    
-    if ($userlogin->hasRights('read_all_override'))
-      return $this->getForTopic($topic_id,$order,$page);
-      
-    $orderby='actualyear DESC, cleantitle';
-    switch ($order) {
-      case 'year':
-        $orderby='actualyear DESC, cleantitle';
-        break;
-      case 'type':
-        $orderby='pub_type ASC, cleanjournal ASC, actualyear DESC, cleantitle'; //funny thing: article is lowest in alphabetical order, so this ordering is enough...
-        break;
-      case 'recent':
-        $orderby='pub_id DESC';
-        break;
-      case 'title':
-        $orderby='cleantitle';
-        break;
-      case 'author':
-        $orderby='cleanauthor, actualyear DESC';
-        break;
-      case 'rating':
-      	$orderby='mark DESC, actualyear DESC';
-        break;
-    }
-    
-    //do we need multipage output / use limit statement
-    $limit = "";
-    $liststyle = $userlogin->getPreference('liststyle');
-    if ($page!=-1)
-    {
-      if ($liststyle > 0)
-      {
-        $limitOffset = $liststyle * $page;
-        $limit = "LIMIT ".$limitOffset.",".$liststyle;
-      }
-    }
-    //we need merge functionality here, so initialze a merge cache
-    $this->crossref_cache = array();
-    
-    if ($userlogin->isAnonymous()) //get only public publications
-    {
-    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication
-    INNER JOIN (SELECT ".AIGAION_DB_PREFIX."publication.pub_id FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-      WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-      AND   ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-      AND   ".AIGAION_DB_PREFIX."publication.derived_read_access_level = 'public'
-      ORDER BY ".$orderby." ".$limit.")
-    AS lim USING (pub_id)");
-     }
-    else //get all non-private publications and publications that belong to the user
-    {
-    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication
-    INNER JOIN (SELECT ".AIGAION_DB_PREFIX."publication.pub_id FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
-      WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
-      AND   ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-      AND ( ".AIGAION_DB_PREFIX."publication.derived_read_access_level != 'private' 
-         OR ".AIGAION_DB_PREFIX."publication.user_id = ".$userlogin->userId().")
-      ORDER BY ".$orderby." ".$limit.")
-    AS lim USING (pub_id)");
-    }
+    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."topicpublicationlink
+    WHERE ".AIGAION_DB_PREFIX."topicpublicationlink.topic_id = ".$CI->db->escape($topic_id)."
+    AND ".AIGAION_DB_PREFIX."publication.pub_id = ".AIGAION_DB_PREFIX."topicpublicationlink.pub_id
+    ORDER BY ".$orderby." ".$limit);
 
     $result = array();
     foreach ($Q->result() as $row)
@@ -1674,15 +1319,10 @@ class Publication_db {
     $CI = &get_instance();
     //we need merge functionality here, so initialze a merge cache
     $this->crossref_cache = array();
-    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication
-    INNER JOIN (SELECT ".AIGAION_DB_PREFIX."publication.pub_id FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."publicationkeywordlink
-      WHERE ".AIGAION_DB_PREFIX."publicationkeywordlink.keyword_id = ".$CI->db->escape($keyword->keyword_id)."
-      AND   ".AIGAION_DB_PREFIX."publicationkeywordlink.pub_id   = ".AIGAION_DB_PREFIX."publication.pub_id
-      ".$limit.")
-    AS lim USING (pub_id)
-    ORDER BY ".$orderby);
-
-
+    $Q = $CI->db->query("SELECT DISTINCT ".AIGAION_DB_PREFIX."publication.* FROM ".AIGAION_DB_PREFIX."publication, ".AIGAION_DB_PREFIX."publicationkeywordlink
+    WHERE ".AIGAION_DB_PREFIX."publicationkeywordlink.keyword_id = ".$CI->db->escape($keyword->keyword_id)."
+    AND ".AIGAION_DB_PREFIX."publication.pub_id = ".AIGAION_DB_PREFIX."publicationkeywordlink.pub_id
+    ORDER BY ".$orderby." ".$limit);
 
     $result = array();
     foreach ($Q->result() as $row)
@@ -1822,30 +1462,22 @@ class Publication_db {
         // may not be accessible for this user
         foreach ($Q->result() as $R) {
             $updatefields =  array('crossref'=>$new_bibtex_id);
-            $Qupdate = $CI->db->update('publication', $updatefields, array('pub_id'=>$R->pub_id));
-    		if (! $Qupdate) {
+            $CI->db->update('publication', $updatefields, array('pub_id'=>$R->pub_id));
+    		if (mysql_error()) {
     		    appendErrorMessage(sprintf(__("Failed to update the bibtex-id in publication %s"),$R->pub_id).".<br/>");
         	}
         }
     }
 
     /** returns all accessible publications, as a map (id=>publication) */
-     function getAllPublicationsAsMap($join_topic = FALSE) {
+    function getAllPublicationsAsMap() {
         $CI = &get_instance();
         $result = array();
-
-        if($join_topic == TRUE)
-        {
-        	$CI->db->orderby('bibtex_id');
-        	$CI->db->from('publication');
-        	$CI->db->join('topicpublicationlink', 'publication.pub_id = topicpublicationlink.pub_id');
-        	$Q = $CI->db->get();
-        }
-        else
-        {
-        	$CI->db->orderby('bibtex_id');
-        	$Q = $CI->db->get('publication');
-        }
+        $CI->db->orderby('bibtex_id');
+        $this->db->from('blogs');
+        $this->db->join('topicpublicationlink', 'publication.pub_id = topicpublicationlink.id');
+        
+        $Q = $CI->db->get();
         foreach ($Q->result() as $R) {
             $next = $this->getFromRow($R);
             if ($next != null) {
@@ -2095,12 +1727,10 @@ class Publication_db {
         $Q = $CI->db->get_where('userpublicationmark',array('pub_id'=>$pub_id));
         $totalmark = 0;
         $count = 0;
-        if ($Q->num_rows() > 0) {
-            foreach ($Q->result() as $R) {
-                if ($R->hasread=='y' && $R->mark != '') {
-                    $count++;
-                    $totalmark += $R->mark;
-                }
+        foreach ($Q->result() as $R) {
+            if ($R->hasread=='y') {
+                $count++;
+                $totalmark += $R->mark;
             }
         }
         $newmark = 0;
@@ -2140,50 +1770,6 @@ class Publication_db {
     	return $suffix;
     }
 
-function set_pub_id($publication){
-		$CI = &get_instance();
-		$customfieldkeys = $CI->customfields_db->getCustomFieldKeys('publication');
-
-    foreach ($customfieldkeys as $field_id => $field_name) {
-		  if ($field_name === 'similar_pub_id') 
-		  {
-	    	$spid_type_id = $field_id;
-	    }
-		}
-
-		//if similar_pub_id is present
-		$spid_field_name = 'CUSTOM_FIELD_' . $spid_type_id;
-
-    if(isset($_POST[$spid_field_name]) && $_POST[$spid_field_name] !== "" && $_POST[$spid_field_name] !== NULL)
-    {
-    	$selected_spid = $_POST[$spid_field_name];
-
-    	$similar_publication = $this->getByID($selected_spid);
-    	$the_other_customFields = $similar_publication->getCustomFields();
-
-    	$ok = false;
-    	foreach ($the_other_customFields as $field_id => $field_name) 
-			{
-
-				if ($the_other_customFields[$field_id]['fieldname'] === 'similar_pub_id') 
-				{
-				  $publication->customfields[$field_id]['value'] = $the_other_customFields[$field_id]['value'];
-				  $ok = true;
-					break;
-				}
-			}
-
-    	if($ok == false)
-    	{
-    		$publication->customfields[$spid_type_id]['value'] = $similar_publication->pub_id;
-
-    		//also update the older one
-    		$data = array('type_id' => $spid_type_id, 'object_id' => $similar_publication->pub_id, 'value' => $similar_publication->pub_id);
-        $CI->db->insert('customfields', $data);
-    	}
-    }
-	}
-    
 }
 
 ?>

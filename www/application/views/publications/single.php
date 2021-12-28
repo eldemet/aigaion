@@ -39,10 +39,10 @@ $this->load->helper('translation');
         if ($userlogin->hasRights('export_email')) {
     	    echo  '&nbsp;['.anchor('publications/exportEmail/'.$publication->pub_id.'/',__('E-mail'),array('title'=>__('Export by e-mail'))).']';
     	  }
-        echo  '&nbsp;['
-           .anchor('export/publication/'.$publication->pub_id.'/bibtex',__('BibTeX'),array('target'=>'aigaion_export')).']';
-        echo  '&nbsp;['
-           .anchor('export/publication/'.$publication->pub_id.'/ris',__('RIS'),array('target'=>'aigaion_export')).']';
+        //echo  '&nbsp;['
+        //   .anchor('export/publication/'.$publication->pub_id.'/bibtex',__('BibTeX'),array('target'=>'aigaion_export')).']';
+        //echo  '&nbsp;['
+        //   .anchor('export/publication/'.$publication->pub_id.'/ris',__('RIS'),array('target'=>'aigaion_export')).']';
 
         if ($userlogin->hasRights('request_copies')) {
   				$author_email = '';
@@ -98,17 +98,30 @@ $this->load->helper('translation');
 
 ?>
   </div>
-  <div class='header'><?php echo $publication->title; ?>
+  <div class='header'>
+  <?php 
+    if ($publication->title)
+    {
+      echo $publication->title;
+      echo '<br>';
+    }
+    if ($publication->booktitle){
+      echo $publication->booktitle;
+    } 
+  ?>
   </div>
 
   <table class='publication_details' width='100%'>
     <tr>
-      <td><?php _e("Type of publication");?>:</td>
-      <td><?php echo translateType($publication->pub_type); ?></td>
-    </tr>
-    <tr>
-      <td><?php _e("Citation");?>:</td>
-      <td><?php echo $publication->bibtex_id; ?></td>
+      <td>
+      <?php
+      if(translateType($publication->pub_type)=='Inbook')
+      {
+        echo 'Chapter';
+      }else{ 
+        echo translateType($publication->pub_type);
+      } 
+      ?></td>
     </tr>
 <?php
 
@@ -235,8 +248,47 @@ $this->load->helper('translation');
       {
           ?>
         <tr>
-          <td valign='top'><?php echo $customfield['fieldname']; ?>: </td>
-          <td valign='top'><?php echo $customfield['value']; ?> </td>
+          <td valign='top'>
+          <?php 
+          if ($customfield['fieldname'] === 'similar_pub_id'){
+            echo 'Same publications';      
+          }else{
+            echo ucfirst($customfield['fieldname']);
+          } 
+          ?>: </td>
+          <td valign='top'>
+          <?php 
+          if ($customfield['fieldname']=='similar_pub_id')
+          {
+          	if ($customfield['value'] == $publication->pub_id)
+          	{ //then this is the primary article
+          		$CI = &get_instance();
+          		$CI->db->where('pub_id', $publication->pub_id);
+          		$CI->db->where('topic_id !=', 0);
+          		$CI->db->where('topic_id !=', 1);
+          		$res = $CI->db->get('topicpublicationlink')->row();
+
+          		echo '<a href="http://cypriotlaw.com/index.php/topics/single/'.
+          																										$res->topic_id.'/author#sim_id_'.
+          																										$publication->pub_id.
+          																										'"> View similar articles</a>';
+          	}
+          	else
+          	{ //then this is a secondary article
+          		//if ($customfield['value']!=""){
+              echo '<a href="http://cypriotlaw.com/index.php/publications/show/'.
+          																										$customfield['value'].'">'.
+          																										$customfield['value']. ". " .
+          						$this->publication_db->getByID($customfield['value'])->title.'</a>';
+          		//}
+          	} 
+          }
+          else
+          {
+            echo ucfirst($customfield['value']);
+          } 
+
+          ?> </td>
         </tr>
             <?php
       }
@@ -252,10 +304,7 @@ $this->load->helper('translation');
       }
       $keyword_string = substr($keyword_string, 0, -2);
 ?>
-    <tr>
-      <td valign='top'><?php _e("Keywords");?>:</td>
-      <td valign='top'><?php echo $keyword_string ?></td>
-    </tr>
+
 <?php
     }
 
@@ -295,28 +344,15 @@ $this->load->helper('translation');
     $crossrefpubs = $this->publication_db->getXRefPublicationsForPublication($publication->bibtex_id);
     if (count($crossrefpubs)>0):
 ?>
-    <tr>
-      <td valign='top'><?php _e("Crossref by");?></td>
-      <td valign='top'>
-<?php
-        foreach ($crossrefpubs as $crossrefpub) {
-            $linkname = $crossrefpub->bibtex_id;
-            if ($linkname == '') {
-                $linkname = $crossrefpub->title;
-            }
-            echo anchor('/publications/show/'.$crossrefpub->pub_id, $linkname)."<br/>";
-        }
-?>
-      </td>
-    </tr>
+
 <?php
     endif;
 ?>
     <tr>
-      <td valign='top'><?php _e("Added by");?>:</td>
+      <td valign='top'><?php //_e("Added by");?></td>
       <td valign='top'>
 <?php
-        echo '<b>['.getAbbrevForUser($publication->user_id).']</b>';
+        //echo '<b>['.getAbbrevForUser($publication->user_id).']</b>';
 ?>
       </td>
     </tr>
@@ -337,58 +373,17 @@ $this->load->helper('translation');
                        )
                   );
 ?>
-    <tr>
-      <td valign='top'><?php _e("Access rights");?>:</td>
-      <td valign='top'><?php echo "<span id='publication_rights_".$publication->pub_id."'><span title='".sprintf(__("%s read / edit rights"), __('publication'))."'>r:".$readrights."e:".$editrights."</span></span>";
-    echo "(".anchor('accesslevels/edit/publication/'.$publication->pub_id,__('Edit all rights'),array('title'=>__('Click to modify access levels'))).")";
-    ?>
-</td>
-    </tr>
+    
 <?php
     }
 ?>
 
-    <tr>
-      <td valign='top'><?php _e("Total mark");?>:</td>
-      <td valign='top'>
-<?php
-        echo $publication->mark;
-?>
-      </td>
-    </tr>
+    
 <?php
     if ($userlogin->hasRights('note_edit')) {
       $this->load->helper('form');
 ?>
-      <tr>
-        <td valign='top'><?php _e("Your mark");?>:</td>
-        <td valign='top'>
-<?php
-          echo form_open('publications/read/'.$publication->pub_id);
-
-          $mark = $publication->getUserMark();
-          if ($mark==-1) {//not read
-            echo form_submit('read',__('Read/Add mark'));
-          } else {
-            echo form_submit('read',__('Update mark'));
-          }
-          echo '1';
-          for ($i = 1; $i < 6; $i++)
-          {
-            echo form_radio('mark',$i,$i==$mark);
-          }
-          echo '5&nbsp;';
-          if ($mark==-1) {//not read
-            echo form_close();
-          } else {
-            echo form_close();
-            echo form_open('publications/unread/'.$publication->pub_id);
-            echo form_submit('unread',__('Unread'));
-            echo form_close();
-          }
-?>
-        </td>
-      </tr>
+      
 <?php
     }
 
@@ -396,148 +391,9 @@ $this->load->helper('translation');
     if (getConfigurationSetting('USE_BOOK_COVERS')=='TRUE')
     {
 ?>
-      <tr>
-        <td colspab='2' valign='top'>
-<?php
-        if ($publication->coverimage != '' && $publication->coverimage != null)
-        {
-          $image = "<img class='coverimage' src='".site_url('/publications/coverimage/'.$publication->pub_id)."'/>";
-          echo anchor('/publications/coverimage/'.$publication->pub_id,$image, array('target'=>'_blank'));
-        }
-        if (    ($userlogin->hasRights('publication_edit'))
-             && $this->accesslevels_lib->canEditObject($publication)           
-            ) 
-        {
-          if ($publication->coverimage != '' && $publication->coverimage != null)
-          {
-            echo '<br/>['.anchor('publications/deletecoverimage/'.$publication->pub_id,__('delete cover image')).']';
-          }
-          else
-          {
-            echo '['.anchor('publications/uploadcoverimage/'.$publication->pub_id,__('upload cover image')).']';
-          }
-        }
-?>
-        </td>
-      </tr>
+
 <?php
     }
-?>
-    <tr>
-      <td colspan='2' valign='top'>
-        <div class='optionbox'>
-<?php
-    if (    ($userlogin->hasRights('attachment_edit'))
-         && ($accessLevelEdit)
-        )
-        echo '['.anchor('attachments/add/'.$publication->pub_id,__('add attachment')).']';
-?>
-        </div>
-        <div class='header'><?php _e("Attachments");?></div>
-      </td>
-    </tr>
-    <tr>
-        <td colspan='2' valign='top'>
-<?php
-    $attachments = $publication->getAttachments();
-    echo "<ul class='attachmentlist'>";
-    foreach ($attachments as $attachment) {
-        echo "<li>".$this->load->view('attachments/summary',
-                          array('attachment'   => $attachment),
-                          true)."</li>";
-    }
-    echo "</ul>";
-?>
-        </td>
-    </tr>
-
-    <tr>
-      <td colspan='2' valign='top'>
-        <div class='optionbox'>
-<?php
-    if (    ($userlogin->hasRights('note_edit'))
-         && ($accessLevelEdit)
-        )
-        echo '['.anchor('notes/add/'.$publication->pub_id,__('add note')).']';
-?>
-        </div>
-        <div class='header'><?php _e("Notes");?></div>
-      </td>
-    </tr>
-    <tr>
-        <td colspan='2' valign='top'>
-<?php
-    $notes = $publication->getNotes();
-    echo "<ul class='notelist'>";
-    foreach ($notes as $note) {
-        echo "<li>".$this->load->view('notes/summary',
-                          array('note'   => $note),
-                          true)."</li>";
-    }
-    echo "</ul>";
-?>
-        </td>
-    </tr>
-
-    <tr>
-      <td colspan='2' valign='top'>
-        <div class='optionbox'>
-<?php
-
-    if (    ($userlogin->hasRights('publication_edit'))
-         && ($accessLevelEdit)
-        )
-    {
-        if ($categorize == True) {
-            echo '['.anchor('publications/show/'.$publication->pub_id,__('finish categorization')).']';
-        } else {
-            echo '['.anchor('publications/show/'.$publication->pub_id.'/categorize',__('categorize publication')).']';
-        }
-    }
-?>
-        </div>
-        <div class='header'><?php _e("Topics");?></div>
-      </td>
-    </tr>
-    <tr>
-      <td colspan='2' valign='top'>
-<?php
-        if (    ($userlogin->hasRights('publication_edit'))
-             && ($accessLevelEdit)
-             && ($categorize == True)
-            )
-        {
-
-            echo "<div class='message'>".__("Click on a topic name to change its subscription status.")."</div>";
-            $user = $this->user_db->getByID($userlogin->userId());
-            $config = array('onlyIfUserSubscribed'=>True,
-                              'user'=>$user,
-                              'includeGroupSubscriptions'=>True,
-                              'publicationId'=>$publication->pub_id
-                                    );
-            $root = $this->topic_db->getByID(1, $config);
-            $this->load->vars(array('subviews'  => array('topics/publicationsubscriptiontreerow'=>array())));
-        } else {
-            $user = $this->user_db->getByID($userlogin->userId());
-            $config = array('onlyIfUserSubscribed'=>True,
-                              'user'=>$user,
-                              'includeGroupSubscriptions'=>True,
-                              'onlyIfPublicationSubscribed'=>True,
-                              'publicationId'=>$publication->pub_id
-                                    );
-            $root = $this->topic_db->getByID(1, $config);
-            $this->load->vars(array('subviews'  => array('topics/maintreerow'=>array())));
-        }
-        echo "<div id='topictree-holder'>\n<ul class='topictree-list'>\n"
-                    .$this->load->view('topics/tree',
-                                      array('topics'   => $root->getChildren(),
-                                            'showroot'  => True,
-                                            /*'collapseAll'  => $categorize,*/
-                                            'depth'     => -1
-                                            ),
-                                      true)."</ul>\n</div>\n";
-?>
-      </td>
-    </tr>
+?>      
   </table>
 </div>

@@ -316,7 +316,7 @@ class Author_db {
         //no delete for authors with publications. check through tables, not through object
         $Q = $CI->db->get_where('publicationauthorlink',array('author_id'=>$author->author_id));
         if ($Q->num_rows()>0) {
-            appendErrorMessage(__('Cannot delete author').': '.__('still has publications (possibly invisible...). Do you need a quick way to delete all publications for an author? Add them to the bookmarklist, then delete them from there...').'.<br/>');
+             appendErrorMessage(__('Cannot delete author').': '.__('still has publications. Delete all author publications before deleting the author').'.<br/>');
             return false;
         }
         

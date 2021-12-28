@@ -11,22 +11,11 @@
   <ul class="mainmenu">
     <li class="mainmenu-header"><?php echo utf8_strtoupper(__('Browse')); ?></li>
     <li><ul class="mainmenu">
-    <li class="mainmenu"><?php echo anchor('topics', __('My Topics')); ?></li>
-    <?php
-    if ($userlogin->hasRights('bookmarklist')) 
-    {
-      ?>
-      <li class="mainmenu"><?php echo anchor('bookmarklist', __('My Bookmarks')); ?></li>
-      <?php
-    }
-    ?>
     <li class="mainmenu"><?php echo anchor('topics/all', __('All Topics')); ?></li>
     <li class="mainmenu"><?php echo anchor('publications', __('All Publications')); ?></li>
     <li class="mainmenu"><?php echo anchor('authors', __('All Authors')); ?></li>
-    <li class="mainmenu"><?php echo anchor('keywords', __('All Keywords')); ?></li>
-    <li class="mainmenu"><?php echo anchor('publications/unassigned', __('Unassigned')); ?></li>
-    <li class="mainmenu"><?php echo anchor('publications/showlist/recent', __('Recent')); ?></li>
-    <li class="mainmenu"><?php echo anchor('search', __('Search')); ?></li>
+
+
 
     <?php
     //the export option is slightly dependent on the view parameter 'exportCommand'
@@ -94,8 +83,8 @@
     <li class="mainmenu-spacer"></li>
     <li class="mainmenu-header"><?php echo utf8_strtoupper(__('Site')); ?></li>
     <li><ul class="mainmenu">
-    <li class="mainmenu"><?php echo anchor('help/', __('Help')); ?></li>
     <li class="mainmenu"><?php echo anchor('help/viewhelp/about', __('About this site')); ?></li>
+    <li class="mainmenu"><?php echo anchor('help/viewhelp/sources', 'Sources'); ?></li>
 <?php
 if ($userlogin->hasRights('database_manage')) {
 ?>
@@ -130,7 +119,7 @@ if ($userlogin->hasRights('user_edit_all')) {
                             "OnChange='var url=\"".site_url('/login/anonymous/')."\";window.document.location=(url+\"/\"+$(\"anonlogin\").value);' id='anonlogin'")
              ."</li>";
     } else {
-      echo "<li class='mainmenu'>".$anonusers[0]->login."</li>";
+      //echo "<li class='mainmenu'>".$anonusers[0]->login."</li>";
     }
 
 //probably no-one would ever assign these two rights to the anon user, but nevertheless....:
@@ -141,9 +130,14 @@ if ($userlogin->hasRights('topic_subscription')) {
     echo "    <li class='mainmenu'>".anchor('users/topicreview/', __('Topic Subscribe'))."</li>\n";
 }
         
-?>	    
+?>
+
+<br>
+<p><a href="http://kede-cyprus.org"><img src="http://kede-cyprus.org/wp-content/uploads/2012/06/kedelogo-300x104.png" width="150" height="52""></a></p>
+<br>	
+	    
     <li class="mainmenu-spacer"></li>
-    <li class="mainmenu-header"><?php echo utf8_strtoupper(__('Login')); ?></li>
+    <li class="mainmenu-header"><?php echo utf8_strtoupper(__('Administrator')); ?></li>
 <?php
     $this->load->helper('form');
     echo '<li>';
@@ -191,14 +185,7 @@ if ($userlogin->hasRights('topic_subscription')) {
   </ul>
 <br/><br/>
 <div style='float:bottom;font-size:90%;'>
-<?php 
-global $AIGAION_SHORTLIST_LANGUAGES;
-foreach ($AIGAION_SHORTLIST_LANGUAGES as $lang)
-{
-  echo anchor('language/set/'.$lang.'/'.implode('/',$this->uri->segment_array()),$this->userlanguage->getLanguageName($lang)).', ';
-}
-echo anchor('language/choose/',"&lt;".__('more')."...&gt;");
-?>
+
 </div>
 </div>
 

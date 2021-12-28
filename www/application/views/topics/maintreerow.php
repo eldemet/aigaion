@@ -37,12 +37,13 @@ Parameters:
                    alt     = '".__('expand')."'/>\n";
         echo "<script type='text/javascript'>".$hide1.$hide2."</script>"; 
     } else {
-        echo "<img  class   = 'icon'
-                    src     = '".getIconUrl('tree_blank.gif')."'
-                    alt     = 'blank'/>\n";
+        //echo "<img  class   = 'icon'
+        //            src     = '".getIconUrl('tree_blank.gif')."'
+        //            alt     = 'blank'/>\n";
     }
    	$publicationCount     = $this->topic_db->getVisiblePublicationCountForTopic($topic->topic_id);
 	$publicationReadCount = $this->topic_db->getReadPublicationCountForTopic($topic->topic_id);
 
-    echo anchor('topics/single/'.$topic->topic_id,$topic->name)." <span title='".sprintf(__('read: %s of %s publications'), $publicationReadCount, $publicationCount)."'><i> ".$publicationReadCount.'/'.$publicationCount."</i></span>\n";
+    //echo anchor('topics/single/'.$topic->topic_id,$topic->name)." <span title='".sprintf(__('read: %s of %s publications'), $publicationReadCount, $publicationCount)."'><i> ".$publicationReadCount.'/'.$publicationCount."</i></span>\n";
+    echo anchor('topics/single/'.$topic->topic_id.'/author',$topic->name)." (".$publicationCount.")\n";
 ?>

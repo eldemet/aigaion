@@ -6,7 +6,7 @@
   {
     if ($author->cleanname!='' && strtolower($author->cleanname[0])!=$initial) {
         $initial = strtolower($author->cleanname[0]);
-        echo '<li><b>'.$author->cleanname[0].'</b></li>';
+        echo '<li><h3>'.$author->cleanname[0].'</h3></li>';
     }
     $name = $author->getName('vlf');
     if ($author->synonym_of=='0')

@@ -19,12 +19,18 @@ function prep_url($str = '')
 	{
 		return '';
 	}
+	else {
+	    $str = filter_var($str, FILTER_SANITIZE_URL);
+	}
 	
 	//mod by PDM, for Aigaion 2.0
-	if (preg_match('/^[a-z]+:\/\//i', $str) == FALSE)
-	{
-		$str = 'http://'.$str;
-	}
+	//if (preg_match('/^[a-z]+:\/\//i', $str) == FALSE)
+	//{
+	//	$str = 'http://'.$str;
+	//}
+	if (preg_match('/^[a-z]+:/', $str) == FALSE) {
+	  $str = 'http://'.$str;
+    }
 	
 	return $str;
 }

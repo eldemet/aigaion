@@ -1,10 +1,21 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed'); 
   $publicationfields  = getPublicationFieldArray($publication->pub_type);
   $customfieldkeys    = $this->customfields_db->getCustomFieldKeys('publication');
-  $formAttributes = array('id' => "publication_{$publication->pub_id}_edit", 'onsubmit' => "submitPublicationForm('publication_{$publication->pub_id}_edit');");
+  $formAttributes = array('id' => "publication_{$publication->pub_id}_edit", 'onsubmit' => "validate_submitPublicationForm('publication_{$publication->pub_id}_edit');");
   $userlogin          = getUserLogin();
   $user               = $this->user_db->getByID($userlogin->userID());
 
+if ($edit_type == 'edit')
+  {
+  	 $this->db->where('pub_id', $publication->pub_id);
+  	 $this->db->where('topic_id !=', 1);
+  	 $Q = $this->db->get_where('topicpublicationlink', array('pub_id' => $publication->pub_id));
+  	 if($Q->num_rows() > 0){
+  	 	$row = $Q->row();
+  	 	$publication->topic = $row->topic_id;
+  	 }
+  }
+  
 $this->load->helper('translation');
 
 echo "<script language='javascript'>";
@@ -37,6 +48,11 @@ echo "</script>";
     }
     ?>
     </div>
+    
+     <div id="alert_msg" style="background-color:#ff0000;color:#fff;padding:10px;display:none;margin-bottom:10px">
+
+    </div>
+    
 <?php
   $isAddForm = $edit_type=='add';
   //open the edit form
@@ -57,21 +73,20 @@ echo "</script>";
       <td><?php echo __('Type of publication');?>:</td>
       <td><?php echo form_dropdown('pub_type', getPublicationTypes(), $publication->pub_type, "onchange=\"this.form.submit_type.value='type_change'; submitPublicationForm('publication_".$publication->pub_id."_edit');\""); ?></td>
     </tr>
+    
     <tr>
-      <td><?php echo __('Publication status');?>:</td>
-      <td><?php echo form_dropdown('status', getPublicationStatusTypes(), $publication->status); ?></td>
-    </tr>
+    	<td><?php echo __('Topic');?>:</td>
+    	<td>
+    		<?php /* get all topics: */ $topics = $this->topic_db->getAllTopicsAsMap('name');?>
+    		<select style="width:100%; font-size:11px" name="topic" id="topic">
+      		<option value="">Choose topic</option>
+      		<?php foreach($topics as $id => $topic):?>
+      			<?php if ($id == 1) continue;?>
+      		   <option <?php if(isset($publication->topic)){if($publication->topic == $id) echo 'selected="selected"'; }?> value="<?php echo $id;?>"><?php echo $topic->name;?></option>
+      		<?php endforeach;?>
+      	<select>
+    	</td>		
 
-    <tr>
-      <td><?php echo __('Title');?>:</td>
-      <td><?php echo form_input(array('name' => 'title', 
-                                      'id'   => 'title', 
-                                      'size' => '90',
-                                      'class'=> 'required'), $publication->title); ?></td>
-    </tr>
-    <tr>
-      <td><?php echo __('Citation');?>:</td>
-      <td><?php echo form_input(array('name' => 'bibtex_id', 'id' => 'bibtex_id', 'size' => '90'), $publication->bibtex_id); ?></td>
     </tr>
 <!-- insert text1 -->
 <?php 
@@ -177,9 +192,16 @@ echo "</script>";
       }   
     endforeach;
     
+    //CyLAW changes:
+    $lang['similar_pub_id'] = 'Same With';
+    $this->load->library('publication_db');
+    //$publs = $this->publication_db->getAllPublicationsAsMap(true); //////////////// bug
+    $lang['language'] = 'Language';   
+    // end CyLAW changes
+    
     //do the custom fields
     $customFields = $publication->getCustomFields();
-    foreach ($customfieldkeys as $field_id => $field_name) {
+    foreach ($customfieldkeys as $field_id => $field_name) :
       if (array_key_exists($field_id, $customFields)) {
         $value = $customFields[$field_id]['value'];
       }
@@ -188,11 +210,32 @@ echo "</script>";
       }
       ?>
     <tr>
-      <td><?php echo $field_name; ?>:</td>
-      <td><?php echo form_input(array('name' => 'CUSTOM_FIELD_'.$field_id, 'id' => 'CUSTOM_FIELD_'.$field_id, 'size' => '90'), $value); ?></td>
+              <td><?php echo $lang[$field_name]; ?>:</td>
+      <?php if($field_name === 'similar_pub_id'):?>
+      	<td>
+      		<select id="same_with" style="width:100%; font-size:11px" name="<?php echo 'CUSTOM_FIELD_'.$field_id;?>" id="<?php echo 'CUSTOM_FIELD_'.$field_id;?>">
+      			<option id="default_none" value="">Επιλέξτε</option>
+      			<?php foreach($publs as $id => $publ):?>
+      				<?php //if($publication->pub_id == $id) continue ;?>
+      				<option class="hidden" data-topic-id="<?php echo $publ->topic_id;?>" <?php if($value == $id ) echo 'selected="selected"';?> value="<?php echo $id;?>"><?php echo  $publ->title !== NULL && $publ->title !== '' ? $publ->pub_id . ". " . $publ->title : $publ->pub_id . ". " . $publ->booktitle;?></option>
+      			<?php endforeach;?>
+      		</select>
+      		<div class='info hidden' id='no_topic_selected'> Please choose <strong>Topic</strong> to update this list <strong>Same With</strong>.</div>
+      	</td>
+      <?php elseif($field_name === 'language'):?>
+      	<td>
+      		<select style="width:100%; font-size:11px" name="<?php echo 'CUSTOM_FIELD_'.$field_id;?>" id="<?php echo 'CUSTOM_FIELD_'.$field_id;?>">
+      			<option value="greek" <?php if($value === 'greek' ) echo 'selected="selected"';?>>Greek</option>
+      			<option value="english" <?php if($value === 'english' ) echo 'selected="selected"';?>>English</option>
+      		</select>
+      	</td>
+      <?php else: ?>
+      	<td><?php echo form_input(array('name' => 'CUSTOM_FIELD_'.$field_id, 'id' => 'CUSTOM_FIELD_'.$field_id, 'size' => '90'), $value); ?></td>
+      <?php endif;?>    
     </tr>
       <?php
-    }
+    //}
+    endforeach;
     
     $keywords = $publication->getKeywords();
     if (is_array($keywords))
@@ -211,14 +254,7 @@ echo "</script>";
       $class  = 'optional';
 
 ?>      
-    <tr>
-      <td valign='top'><?php echo __('Keywords');?>:</td>
-      <td valign='top'><?php echo "<span title='".sprintf(__('%s field'), $class)."'>".form_input(array('name' => $key, 'id' => $key, 'size' => '90', 'alt' => $class, 'autocomplete' => 'off', 'class' => $class), $keywords);?></span>
-      <div name='keyword_autocomplete' id='keyword_autocomplete' class='autocomplete'>
-      </div>
-      <?php echo $this->ajax->auto_complete_field('keywords', $options = array('url' => base_url().'index.php/keywords/li_keywords/', 'update' => 'keyword_autocomplete', 'tokens' => array(",", ";"), 'frequency' => '0.01'))."\n";?>
-      </td>
-    </tr>
+    
 <?php
     //show dispreferred fields at the end
     echo $hiddenFields;
@@ -309,9 +345,9 @@ echo "</script>";
      
 
 if ($edit_type=='edit') {
-  echo $this->ajax->button_to_function(__('Change'),"submitPublicationForm('publication_".$publication->pub_id."_edit');")."\n";
+  echo $this->ajax->button_to_function(__('Change'),"validate_submitPublicationForm('publication_".$publication->pub_id."_edit');", 'submit_form')."\n";
 } else {
-  echo $this->ajax->button_to_function(__('Add'),"submitPublicationForm('publication_".$publication->pub_id."_edit');")."\n";
+  echo $this->ajax->button_to_function(__('Add'),"validate_submitPublicationForm('publication_".$publication->pub_id."_edit');", 'submit_form')."\n";
 }
   echo form_close()."\n";
 

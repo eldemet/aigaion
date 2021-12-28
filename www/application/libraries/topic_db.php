@@ -341,7 +341,8 @@ class Topic_db {
 	        appendErrorMessage(__('Categorize publication').': '.__('insufficient rights').'.<br/>');
 	        return;
         }
-        $CI->db->delete('topicpublicationlink', array('pub_id' => $pub_id, 'topic_id' => $topic_id)); 
+        //$CI->db->delete('topicpublicationlink', array('pub_id' => $pub_id, 'topic_id' => $topic_id)); 
+        $CI->db->delete('topicpublicationlink', array('pub_id' => $pub_id));
         $CI->db->insert('topicpublicationlink', array('pub_id' => $pub_id, 'topic_id' => $topic_id)); 
     }
     
@@ -676,5 +677,27 @@ class Topic_db {
     return $result;
     
   }
+  
+/** returns all accessible publications, as a map (id=>publication) */
+    function getAllTopicsAsMap($order_by = NULL) {
+        $CI = &get_instance();
+        $result = array();
+        if($order_by !== NULL)
+        {
+        	$CI->db->order_by($order_by);
+        }
+
+        $Q = $CI->db->get('topics');
+
+
+
+        foreach ($Q->result() as $R) {
+            if ($R != null) {
+                $result[$R->topic_id] = $R;
+            }
+        }
+        return $result;
+    }  
+  
 }
 ?>

@@ -13,6 +13,7 @@
     <link href="<?php echo AIGAION_WEBCONTENT_URL; ?>themes/default/css/styling.css"     rel="stylesheet" type="text/css" media="screen,projection,tv" />
     <link href="<?php echo getCssUrl("positioning.css"); ?>" rel="stylesheet" type="text/css" media="screen,projection,tv" />
     <link href="<?php echo getCssUrl("styling.css"); ?>"     rel="stylesheet" type="text/css" media="screen,projection,tv" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
   </head>
   <body>
 <?php
@@ -62,9 +63,13 @@
         ?>
         &nbsp;<?php
             //echo anchor('','Aigaion 2.0','id="page_title"');
-            echo anchor('',"<img border=0 src='".AIGAION_WEBCONTENT_URL."themes/".getThemeName()."/img/aigaion2.png'/>",'id="page_title"');
+            //echo anchor('',"<img border=0 src='".AIGAION_WEBCONTENT_URL."themes/".getThemeName()."/img/aigaion2.png'/>",'id="page_title"');
         ?>
         
+        <h1>
+         <a rel="home" title="Digital Bibliography of Cypriot Law" href="http://cypriotlaw.com/index.php/topics/all">Digital Bibliography of Cypriot Law</a>
+         </h1>
+         
       </div>
       <!-- End of header -->
 

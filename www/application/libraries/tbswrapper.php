@@ -43,7 +43,5 @@ class Tbswrapper{
         Tbswrapper::getInstance()->TBS->Show(TBS_NOTHING);
         return Tbswrapper::getInstance()->TBS->Source;
     }
-
 }
-
-?> 
+?>

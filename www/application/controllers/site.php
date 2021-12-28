@@ -322,8 +322,8 @@ class Site extends CI_Controller {
 	            $this->load->helper('checkupdates');
                 $checkresult .= "<tr><td colspan=2><p class='header1'>".__("Aigaion updates")."</p></td></tr>\n";
 	            $checkresult .= "<tr><td>".__("Checking for updates")."...</td>";
-//	            $updateinfo = '';
-	            $updateinfo = checkUpdates();
+	            $updateinfo = '';
+	            //$updateinfo = checkUpdates();
 	            if ($updateinfo == '') {
     		        $checkresult .= '<td><b>'.__('OK').'</b></td></tr>';
         			$checkresult .= '<tr><td colspan=2><div class="message">'.__('This installation of Aigaion is up-to-date.').'.</div></td></tr>';

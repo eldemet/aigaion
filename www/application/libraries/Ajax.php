@@ -29,9 +29,17 @@
 
 class JavaScript {
 
-	function button_to_function($name,$function=null)
+	function button_to_function($name,$function=null, $id= NULL)
 	{
-		return '<input type="button" value="'.$name.'" onclick="'.$function.'" />';
+		//return '<input type="button" value="'.$name.'" onclick="'.$function.'" />';
+        if ($id !== NULL)
+		{
+			return '<input type="button" value="'.$name.'" id="'.$id.'" onclick="'.$function.'" />';
+		}
+		else
+		{
+			return '<input type="button" value="'.$name.'" onclick="'.$function.'" />';
+		}
 	}
 
 	function escape($javascript)

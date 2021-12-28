@@ -17,7 +17,7 @@
         echo "<div class='errormessage' width='100%'>".$err."</div>";
         clearErrorMessage();
     }
-    $formtitle = __('Welcome to the Aigaion bibliography system, please login');
+    $formtitle = __('Welcome to the KEDE Digital Law bibliography system, please login');
     if ($this->latesession->get('FORMREPOST')==True) {
         echo "<div class='errormessage' width='100%'>".sprintf(__('You just submitted a form named %s, but it seems that you have been logged out. To proceed with submitting the information, please log in again, then confirm that you want to re-submit the data.'), $this->latesession->get('FORMREPOST_formname'))
 			   ." </div>";
@@ -81,7 +81,7 @@
           </tr>
           <tr>
             <td colspan='2'>
-              <?php echo sprintf(__('For more information about the Aigaion bibliography system visit %s'), '<a href="http://www.aigaion.de/" class="external">Aigaion.de</a>');?>
+                <?php echo sprintf(__('For more information about the KEDE Digital Law bibliography system visit %s'), '<a href="http://www.kede-cyprus.org/" class="external">KEDE Website</a>');?>
             </td>
           </tr>
         </table>

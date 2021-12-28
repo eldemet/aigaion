@@ -329,7 +329,7 @@ class Topics extends CI_Controller {
         //get output
         $headerdata                 = array();
         $headerdata['title']        = __('Topic').': '.$topic->name;
-        $headerdata['javascripts']  = array('tree.js','prototype.js','scriptaculous.js','builder.js','externallinks.js');//, 'publicationlists.js');
+        $headerdata['javascripts']  = array('tree.js','prototype.js','scriptaculous.js','builder.js','externallinks.js', 'topics.js');//, 'publicationlists.js');
         $headerdata['sortPrefix']        = 'topics/single/'.$topic->topic_id.'/';
         $headerdata['exportCommand']        = 'export/topic/'.$topic->topic_id.'/';
         $headerdata['exportName']    = __('Export topic');

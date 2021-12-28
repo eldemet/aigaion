@@ -4,10 +4,10 @@ $authorfields = array(
     'firstname' => __('First name(s)'),
     'von' => __('von-part'),
     'surname' => __('Last name(s)'),
-    'jr' => __('jr-part'),
-    'email' => __('Email'),
-    'institute' => __('Institute'),
-    'url' => __('URL')
+    'jr' => __('Year')
+    //'email' => __('Email'),
+    //'institute' => __('Institute'),
+    //'url' => __('URL')
 );
 $customfieldkeys = $this->customfields_db->getCustomFieldKeys('author');
 $formAttributes = array('ID' => 'author_' . $author->author_id . '_edit');
@@ -67,7 +67,16 @@ $formAttributes = array('ID' => 'author_' . $author->author_id . '_edit');
             ?>
             <tr>
                 <td><?php echo $field_name; ?>:</td>
-                <td><?php echo form_input(array('name' => 'CUSTOM_FIELD_' . $field_id, 'id' => 'CUSTOM_FIELD_' . $field_id, 'size' => '45'), $value); ?></td>
+                <td><?php 
+      if ($field_id == 1)
+      {
+      	echo form_textarea(array('name' => 'CUSTOM_FIELD_'.$field_id, 'id' => 'CUSTOM_FIELD_'.$field_id, 'cols' => '50'), $value);
+      }
+      else
+      {
+      	echo form_input(array('name' => 'CUSTOM_FIELD_'.$field_id, 'id' => 'CUSTOM_FIELD_'.$field_id, 'size' => '45'), $value); 
+      }	
+      	?></td>
             </tr>
         <?php
         }

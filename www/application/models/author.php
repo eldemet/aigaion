@@ -62,15 +62,20 @@ class Author extends CI_Model {
       if ($this->surname != '')
       ($name != '') ? $name .= " ".$this->surname : $name = $this->surname;
 
-      if ($this->jr != '') {
-        ($name != '') ? $name .= ", ".$this->jr : $name = $this->jr;
-        if ($this->firstname == '') $name .= ", {}"; //make sure that even without first name, the jr is preserved as jr and does not become a firstname on subsequent import
-      }
+      //if ($this->jr != '') {
+       // ($name != '') ? $name .= ", ".$this->jr : $name = $this->jr;
+        //if ($this->firstname == '') $name .= ", {}"; //make sure that even without first name, the jr is preserved as jr and does not become a firstname on subsequent import
+      //}
 
       if ($this->firstname != '')
       ($name != '') ? $name .= ", ".$this->firstname : $name = $this->firstname;
 
+    if ($this->jr != '') {
+        ($name != '') ? $name .= " ".$this->jr : $name = $this->jr;
+        if ($this->firstname == '') $name .= " {}";
+        }
       return $name;
+    
       break;
 
       case 'vl':    //von last

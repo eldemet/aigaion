@@ -23,7 +23,7 @@ if ($userlogin->hasRights('publication_edit'))
     <td  width='100%'>
       <table class='author_details'>
 <?php
-      $authorfields = array('firstname'=>__('First name(s)'), 'von'=>__('von-part'), 'surname'=>__('Last name(s)'), 'jr'=>__('jr-part'), 'email'=>__('Email'), 'institute'=>__('Institute'));
+      $authorfields = array('firstname'=>__('First name(s)'), 'von'=>__('von-part'), 'surname'=>__('Last name(s)'), 'jr'=>__('Year'), 'email'=>__('Email'), 'institute'=>__('Institute'));
       foreach ($authorfields as $field=>$display)
       {
         if (trim($author->$field) != '')
@@ -60,7 +60,7 @@ if ($userlogin->hasRights('publication_edit'))
 ?>
       </table>
 <?php
-    if (getConfigurationSetting('USE_AUTHOR_SYNONYMS') == 'TRUE')
+    if (getConfigurationSetting('USE_AUTHOR_SYNONYMS') == 'TRUE' && ($userlogin->hasRights('publication_edit')))
     {
       //check if this is a synonym of another author
       if ($author->synonym_of != '0') {
@@ -88,6 +88,7 @@ if ($userlogin->hasRights('publication_edit'))
     </td>
     <td>
 <?php 
+/*
     if ($userlogin->hasRights('bookmarklist')) {
       echo '<div style="border:1px solid black;padding-right:0.2em;margin:0.2em;">';
       echo "<ul>";
@@ -97,6 +98,7 @@ if ($userlogin->hasRights('publication_edit'))
            .anchor('bookmarklist/removeauthor/'.$author->author_id,__('UnBookmarkAll')).']</nobr></li>';
       echo  "</ul>";
     }
+*/
 //echo  "<li><nobr>["
 //      .anchor('export/author/'.$author->author_id,__('Export'))."]</nobr></li>
 

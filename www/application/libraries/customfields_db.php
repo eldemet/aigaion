@@ -52,9 +52,33 @@ class Customfields_db {
     $result = array();
     if ($Q->num_rows() > 0)
     {
+          $customfieldkeys = $this->getCustomFieldKeys('publication');
+      $customFields = $this->getForPublication($CI->input->post('pub_id'));
+      $similar_pub_exists = FALSE;
+      foreach ($customfieldkeys as $field_id => $field_name) {
+      	if (array_key_exists($field_id, $customFields)) {
+        	if($field_name = 'similar_pub_id'){
+        		$similar_pub_exists = TRUE;
+        		break;
+        	}
+        }
+      }
       foreach ($Q->result() as $R)
       {
-        $result[$R->type_id] = array('fieldname' => $R->name, 'value' => trim($CI->input->post('CUSTOM_FIELD_'.$R->type_id)));
+        //$result[$R->type_id] = array('fieldname' => $R->name, 'value' => trim($CI->input->post('CUSTOM_FIELD_'.$R->type_id)));
+        $value = trim($CI->input->post('CUSTOM_FIELD_'.$R->type_id));
+      	if($value === "" OR $value === null)
+      	{
+      		if($similar_pub_exists) // then delete the custom_field entry for this pub
+      		{
+      			$value === null;
+      		}
+      		else
+      		{
+   				continue;
+      		}
+      	}
+        $result[$R->type_id] = array('fieldname' => $R->name, 'value' => $value);
       }
     }
     return $result;  
